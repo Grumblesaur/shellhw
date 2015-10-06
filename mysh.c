@@ -1,17 +1,27 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 int command(char * buffer) {
 	char instruction[512];
 	char * cptr;
+	printf("command() initialized.\n");
 	if (strlen(instruction) == 0) {
 		return 0;
 	}
+	
+	if (!strstr(buffer, " ") && !strstr(buffer, "\t")) {
+		system(buffer);
+		return 1;
+	}
+	
 	cptr = strtok(buffer, " \t");
+	printf("strtok() and strcat() procedure begun\n");
 	strcpy(instruction, cptr);
 	strcat(instruction, " ");
 	while(cptr != NULL) {
+		printf("strcat() loop\n");
 		strcat(instruction, cptr);
 		strcat(instruction, " ");
 	}
@@ -34,7 +44,7 @@ int main(int argc, char * argv[]) {
 	
 	// init process
 	char buffer[512];
-	
+	printf("Process initialized.\n");
 	// TODO:
 		// implement interactive mode loop
 		// implement non-exec() commands
@@ -44,11 +54,15 @@ int main(int argc, char * argv[]) {
 		fgets(buffer, 512, stdin);
 		printf("\n");
 		
+		if (strstr(buffer, "exit")) {
+			exit(EXIT_SUCCESS);
+		}
+		
 		if(command(buffer)) {
 			continue;
 		}
 		if(ispyfile(buffer)) {
-			system("python %s\n", buffer);
+			system(sprintf("python %s\n", buffer));
 		}
 		
 	}
