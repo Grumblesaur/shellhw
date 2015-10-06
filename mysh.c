@@ -6,11 +6,11 @@
 int command(char * buffer) {
 	char instruction[512];
 	char * cptr;
-	printf("command() initialized.\n");
-	if (strlen(instruction) == 0) {
+	if (strlen(buffer) == 0) {
 		return 0;
 	}
-	
+
+	// commands w/o args
 	if (!strstr(buffer, " ") && !strstr(buffer, "\t")) {
 		system(buffer);
 		return 1;
@@ -22,6 +22,7 @@ int command(char * buffer) {
 	strcat(instruction, " ");
 	while(cptr != NULL) {
 		printf("strcat() loop\n");
+		cptr = strtok(buffer, " ");
 		strcat(instruction, cptr);
 		strcat(instruction, " ");
 	}
