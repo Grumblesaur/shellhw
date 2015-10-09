@@ -2,6 +2,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include "argnode.h"
 
 int command(char * buffer) {
 	char instruction[512];
@@ -12,7 +13,7 @@ int command(char * buffer) {
 
 	// commands w/o args
 	if (!strstr(buffer, " ") && !strstr(buffer, "\t")) {
-		system(buffer);
+		// system(buffer);
 		return 1;
 	}
 	
@@ -26,7 +27,7 @@ int command(char * buffer) {
 		strcat(instruction, cptr);
 		strcat(instruction, " ");
 	}
-	system(instruction);
+	// system(instruction);
 	return 1;
 }
 
@@ -63,7 +64,7 @@ int main(int argc, char * argv[]) {
 			continue;
 		}
 		if(ispyfile(buffer)) {
-			system(sprintf("python %s\n", buffer));
+			// system(sprintf("python %s\n", buffer));
 		}
 		
 	}
