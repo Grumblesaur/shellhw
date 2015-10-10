@@ -1,12 +1,13 @@
 #include <malloc.h>
 #include <stdlib.h>
+#include <string.h>
 
 struct argnode {
 	char data[64];
 	struct argnode * next;
 };
 
-int add_node(struct argnode ** list, char * arg) {
+int add_node(struct argnode ** list, char * arg, int arglen) {
 	struct argnode * currptr;
 	
 	// create new argnode
@@ -17,7 +18,7 @@ int add_node(struct argnode ** list, char * arg) {
 		return 0;
 	}
 	
-	strcpy(newptr->data, arg);
+	strncpy(newptr->data, arg, arglen);
 	newptr->next = NULL;
 	
 	currptr = *list;
