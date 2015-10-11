@@ -34,52 +34,60 @@ int parse(char * buffer) {
 
 	while (*cptr != 0) {
 		if (argc > MAX_ARGS) {
-			printf("Error! Too many arguments!\n");
+			fprintf(stdout, "Error! Too many arguments!\n");
 			return 0;
 		}
 		if (*cptr == ' ' || *cptr == '\t') {
 			// skip whitespace while looking for an argument
 			++cptr;
-			printf("skipped a whitespace character\n");
+			fprintf(stdout, "skipped a whitespace character\n");
 			continue;
 		} else if (*cptr == '\0') {
 			// end of buffer condition
-			printf("end of command reached\n");
+			fprintf(stdout, "end of command reached\n");
 			break;
 		} else if (*cptr != '\t' && *cptr != ' ') {
 			// argument condition; find length
-			printf("found an argument\n");
+			fprintf(stdout, "found an argument\n");
 			cptr2 = cptr;
 			int len = arglen(&cptr2);
-			printf("arglen = %d\n", len);
+			fprintf(stdout, "arglen = %d\n", len);
 			// point a unit of the array of pointers toward this argument
 			char * arg = malloc((sizeof(char) * (len + 1)));
 			strncpy(arg, cptr, len);
 			arg[strlen(arg) - 1] = '\0';
 			argv[argc++] = arg;
-			printf("argument count is %d\n", argc);
+			fprintf(stdout, "argument count is %d\n", argc);
 			cptr = cptr2;
 		}
+	}
+	
+	int ampy = 0;
+	if (strcmp(argv[argc - 1], "&")) {
+		ampy = 1;
+		*argv[argc - 1] = 0;
 	}
 	// last argument must delimit argument vector with null pointer
 	argv[argc] = NULL;
 	
 	int n;
-	for (n = 0; n < argc; ++n) {
+	/* for (n = 0; n < argc; ++n) {
 		if (striswhtspc(argv[n])) {
-			printf("SPACE\n");
+			fprintf(stdout, "SPACE\n");
 		} else {
-			printf("%s\n", argv[n]);
+			fprintf(stdout, "%s\n", argv[n]);
 		}
-	}
-		
-	printf("execution stage next\n");
+	} */	
+	fprintf(stdout, "execution stage next\n");
 		
 	// create argument vector for execvp() call
 	int pid = fork();
-	if (getpid() == pid) {
-		execvp(argv[0], argv);
-	} else {
+	if (getpid() == 0) {
+		if (execvp(argv[0], argv) == -1) {
+			fprintf(stdout, "execvp() failed to launch: %s\n", buffer);
+		}
+	}
+	else if (!ampy && getpid() == pid) {
 		wait();
 	}
 	
@@ -121,14 +129,14 @@ int main(int argc, char * argv[]) {
 	
 	// init process
 	char buffer[512];
-	printf("Process initialized.\n");
+	fprintf(stdout, "Process initialized.\n");
 	// TODO:
 		// implement interactive mode loop
 		// implement non-exec() commands
 	for(;;) {
-		printf("mysh> ");
+		fprintf(stdout, "mysh> ");
 		fgets(buffer, 512, stdin);
-		printf("\n");
+		fprintf(stdout, "\n");
 		
 		if (striswhtspc(buffer)) {
 			continue;
