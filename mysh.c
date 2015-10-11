@@ -77,8 +77,10 @@ int parse(char * buffer) {
 		
 	// create argument vector for execvp() call
 	int pid = fork();
-	if (pid == 0) {
-		execv(argv[0], argv);
+	if (getpid() == pid) {
+		execvp(argv[0], argv);
+	} else {
+		wait();
 	}
 	
 	// heap cleanup
