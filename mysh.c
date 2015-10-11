@@ -6,11 +6,11 @@
 
 const int MAX_ARGS = 64;
 
-int arglen(char * c) {
+int arglen(char ** c) {
 	int len = 0;
-	while (*c != 0 && *c != '\t' && *c != ' ') {
+	while (**c != 0 && **c != '\t' && **c != ' ') {
 		++len;
-		++c;
+		++(*c);
 	}
 	return len;
 }
@@ -40,24 +40,41 @@ int parse(char * buffer) {
 		if (*cptr == ' ' || *cptr == '\t') {
 			// skip whitespace while looking for an argument
 			++cptr;
+			printf("skipped a whitespace character\n");
 			continue;
 		} else if (*cptr == '\0') {
 			// end of buffer condition
+			printf("end of command reached\n");
 			break;
 		} else if (*cptr != '\t' && *cptr != ' ') {
 			// argument condition; find length
+			printf("found an argument\n");
 			cptr2 = cptr;
-			int len = arglen(cptr2);
+			int len = arglen(&cptr2);
+			printf("arglen = %d\n", len);
 			// point a unit of the array of pointers toward this argument
 			char * arg = malloc((sizeof(char) * (len + 1)));
 			strncpy(arg, cptr, len);
 			arg[strlen(arg) - 1] = '\0';
 			argv[argc++] = arg;
+			printf("argument count is %d\n", argc);
+			cptr = cptr2;
 		}
 	}
 	// last argument must delimit argument vector with null pointer
 	argv[argc] = NULL;
 	
+	int n;
+	for (n = 0; n < argc; ++n) {
+		if (striswhtspc(argv[n])) {
+			printf("SPACE\n");
+		} else {
+			printf("%s\n", argv[n]);
+		}
+	}
+		
+	printf("execution stage next\n");
+		
 	// create argument vector for execvp() call
 	int pid = fork();
 	if (pid == 0) {
@@ -79,6 +96,10 @@ int ispyfile(char * buffer) {
 }
 
 int striswhtspc(char * buffer) {
+	if (strlen(buffer) == 0) {
+		return 0;
+	}
+	
 	while (*buffer != 0) {
 		if (*buffer != ' ' && *buffer != '\t' && *buffer != '\n') {
 			return 0;
