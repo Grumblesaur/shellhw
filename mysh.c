@@ -4,11 +4,11 @@
 #include <stdlib.h>
 #include "argnode.h"
 
-void swap(char * x, char * y) {
+void swap(char ** x, char ** y) {
 	char * temp;
-	temp = x;
-	x = y;
-	y = temp;
+	temp = *x;
+	*x = *y;
+	*y = temp;
 }
 
 int parse(char * buffer) {
@@ -50,7 +50,7 @@ int parse(char * buffer) {
 			printf("Found length of argument\n");
 			// cptr should be ready to look for the next argument
 			// cptr2 will be used to strncpy() to the list node
-			swap(cptr, cptr2);
+			swap(&cptr, &cptr2);
 			printf("swapped cptrs to prepare for next loop iteration\n");
 			if (listinit == 0) {
 				// first element of args list
@@ -85,6 +85,16 @@ int ispyfile(char * buffer) {
 	return 0;
 }
 
+int striswhtspc(char * buffer) {
+	while (*buffer != 0) {
+		if (*buffer != ' ' && *buffer != '\t' && *buffer != '\n') {
+			return 0;
+		}
+		++buffer;
+	}
+	return 1;
+}
+
 int main(int argc, char * argv[]) {
 	if (argc > 1) {
 		// TODO:
@@ -99,22 +109,21 @@ int main(int argc, char * argv[]) {
 	// TODO:
 		// implement interactive mode loop
 		// implement non-exec() commands
-	
 	for(;;) {
 		printf("mysh> ");
 		fgets(buffer, 512, stdin);
 		printf("\n");
 		
+		if (striswhtspc(buffer)) {
+			continue;
+		}
+		
 		if (strstr(buffer, "exit")) {
 			exit(EXIT_SUCCESS);
 		}
 		
-		if(parse(buffer)) {
-			continue;
-		}
-		if(ispyfile(buffer)) {
-			// system(sprintf("python %s\n", buffer));
-		}
+		parse(buffer);
+		
 		
 	}
 	return 0;
