@@ -7,6 +7,7 @@ struct argnode {
 };
 
 int add_node(struct argnode **, char *, int);
+int arglist_len(struct argnode **);
 void destruct_arglist(struct argnode **);
 
 #endif

@@ -37,6 +37,16 @@ int add_node(struct argnode ** list, char * arg, int arglen) {
 	return 1;
 }
 
+int arglist_len(struct argnode ** args) {
+	struct argnode * currptr = *args;
+	int count = 1;
+	while (currptr->next != NULL) {
+		++count;
+		currptr = currptr->next;
+	}
+	return count;
+}
+
 void destruct_arglist(struct argnode ** list) {
 	struct argnode * currnode, * nextnode;
 	currnode = *list;

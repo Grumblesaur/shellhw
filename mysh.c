@@ -24,25 +24,34 @@ int parse(char * buffer) {
 	
 	struct argnode *args = (struct argnode*) malloc(sizeof(struct argnode));
 	
+	printf("Beginning construction of argument list\n");
+	
 	while (*cptr != 0) {
 		arglen = 0;
+		printf("entered outer while-loop\n");
 		if (*cptr == ' ' || *cptr == '\t') {
 			// ignore superfluous whitespace
 			++cptr;
 			continue;
-		} else if (*cptr != ' ' && *cptr != '\t') {
+			printf("found a whitespace char\n");
+		} else if (*cptr != ' ' && *cptr != '\t' && *cptr != 0) {
 			// when argument is found, count it
 			++argcount;
 			cptr2 = cptr;
+			printf("found an argument\n");
 			// determine its length cptr is its current starting position
-			while (*cptr2 != ' ' && *cptr != '\t' && cptr != 0) {
+			while (*cptr2 != ' ' && *cptr2 != '\t' && cptr2 != 0) {
 				// determine its length, exit loop upon space or buffer end
+				printf("looking for length of argument\n");
+				printf("%s\n", cptr2);
 				++arglen;
 				++cptr2;
 			}
+			printf("Found length of argument\n");
 			// cptr should be ready to look for the next argument
 			// cptr2 will be used to strncpy() to the list node
 			swap(cptr, cptr2);
+			printf("swapped cptrs to prepare for next loop iteration\n");
 			if (listinit == 0) {
 				// first element of args list
 				strncpy(args->data, cptr2, arglen);
@@ -50,10 +59,23 @@ int parse(char * buffer) {
 				// otherwise
 				add_node(&args, cptr2, arglen);
 			}
-			
 		}
-		
 	}
+	
+	printf("Beginning construction of argument vector\n");
+	
+	// create argument vector for execvp() call
+	int argc = arglist_len(&args);
+	char argv[argc][512];
+	struct argnode * currptr = args;
+	int i;
+	for (i = 0; i < argc; ++i) {
+		strcpy(argv[i], currptr->data);
+		currptr = currptr->next;
+	}
+	destruct_arglist(&args);
+	
+	// TODO: implement execvp() & fork() logic here
 		
 	return 1;
 }
