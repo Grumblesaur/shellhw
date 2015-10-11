@@ -66,15 +66,20 @@ int parse(char * buffer) {
 	
 	// create argument vector for execvp() call
 	int argc = arglist_len(&args);
-	char argv[argc][512];
+	char argv[argc + 1][512];
 	struct argnode * currptr = args;
 	int i;
 	for (i = 0; i < argc; ++i) {
 		strcpy(argv[i], currptr->data);
 		currptr = currptr->next;
 	}
+	argv[argc] = 0;
 	destruct_arglist(&args);
 	
+	int pid = fork();
+	if (pid == 0) {
+		execv(argv[0], argv);
+	}
 	// TODO: implement execvp() & fork() logic here
 		
 	return 1;
