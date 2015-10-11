@@ -1,11 +1,11 @@
 run: mysh
 	./mysh
 
-mysh: mysh.o argnode.o
-	gcc -o mysh mysh.o argnode.o
+mysh: mysh.o
+	gcc -o mysh mysh.o
 
-mysh.o: mysh.c argnode.c
-	gcc -c mysh.c argnode.c
+mysh.o: mysh.c
+	gcc -c mysh.c
 
 clean:
 	rm *.o mysh

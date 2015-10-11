@@ -2,7 +2,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include "argnode.h"
 
 const int MAX_ARGS = 64;
 
@@ -70,14 +69,6 @@ int parse(char * buffer) {
 	// last argument must delimit argument vector with null pointer
 	argv[argc] = NULL;
 	
-	int n;
-	/* for (n = 0; n < argc; ++n) {
-		if (striswhtspc(argv[n])) {
-			fprintf(stdout, "SPACE\n");
-		} else {
-			fprintf(stdout, "%s\n", argv[n]);
-		}
-	} */	
 	fprintf(stdout, "execution stage next\n");
 		
 	// create argument vector for execvp() call
