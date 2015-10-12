@@ -3,25 +3,11 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-const int MAX_ARGS = 64;
-
-int arglen(char ** c) {
-	int len = 0;
-	while (**c != 0 && **c != '\t' && **c != ' '
-		&& **c != '\r' && **c != '\n') {
-		++len;
-		++(*c);
-		fprintf(stdout, "iterated arglen() loop\n");
-	}
-	return len;
-}
-
-void swap(char ** x, char ** y) {
-	char * temp;
-	temp = *x;
-	*x = *y;
-	*y = temp;
-}
+// with arguments typically being a few characters each, delimited by spaces
+// and constrained to a 512 character buffer, 128 is more than enough slots
+// for arguments in our vector
+const int MAX_ARGS = 128;
+const char error[] = "An error has occurred.\n";
 
 int parse_builtin(char * buffer) {
 	const char * builtins[] = {"exit", "cd", "pwd", "wait"};
@@ -66,81 +52,42 @@ int parse(char * buffer) {
 		return 0;
 	}
 	// initialize vars for parsing
-	char * cptr = buffer;
-	char * cptr2;
+	char * cptr;
 	int argc = 0;
 	char * argv[MAX_ARGS];
-
-	while (*cptr != 0) {
-		if (argc > MAX_ARGS) {
-			fprintf(stdout, "Error! Too many arguments!\n");
-			return 0;
-		}
-		
-		if (*cptr == ' ' || *cptr == '\t' ||
-			*cptr == '\r' || *cptr == '\n') {
-			// skip whitespace while looking for an argument
-			++cptr;
-			fprintf(stdout, "skipped a whitespace character\n");
-			continue;
-			
-		} else if (*cptr == '\0') {
-			// end of buffer condition
-			fprintf(stdout, "end of command reached\n");
-			break;
-			
-		} else {
-			// argument condition; find length
-			fprintf(stdout, "found an argument\n");
-			cptr2 = cptr;
-			int len = arglen(&cptr2);
-			fprintf(stdout, "arglen = %d\n", len);
-			
-			// point a unit of the array of pointers toward this argument
-			char * arg = malloc((sizeof(char) * (len + 1)));
-			if (arg == NULL) {
-				fprintf(stdout, "Out of memory!\n");
-			}
-			
-			strncpy(arg, cptr, len);
-			arg[len] = '\0';
-			fprintf(stdout, "The current argument is '%s'.\n", arg);
-			argv[argc++] = arg;
-			fprintf(stdout, "argument count is %d\n", argc);
-			cptr = cptr2;
-		}
+	int ampy = 0; // should this run in the background?
+	
+	fprintf(stdout, "Begin tokenizing process\n");
+	cptr = strtok(buffer, " \t\r\n");
+	argv[argc] = cptr;
+	while (cptr != NULL) {
+		cptr = strtok(NULL, " \t\r\n");
+		argv[++argc] = cptr;
 	}
 	
-	int ampy = 0;
-	if (strcmp(argv[argc - 1], "&")) {
+	fprintf(stdout, "Terminate argvector with nullptr\n");
+	
+	int i;
+	fprintf(stdout, "argc is %d\n args are:\n", argc);
+	for (i = 0; i < argc; ++i) {
+		fprintf(stdout, "\t%s\n", argv[i]);
+	}
+	
+	fprintf(stdout, "Check for & instruction\n");	
+	if (strcmp(argv[argc - 1], "&") == 0) {
 		ampy = 1;
-		*argv[argc - 1] = 0;
 	}
-	// last argument must delimit argument vector with null pointer
-	argv[argc] = NULL;
 	
-	int n;
-	for (n = 0; n < argc; ++n) fprintf(stdout, "'%s'\n", argv[n]);
-	
-	fprintf(stdout, "execution stage next\n");
-	
-	// create argument vector for execvp() call
+	fprintf(stdout, "Start fork() & exec() process\n");	
 	int pid = fork();
 	if (pid == 0) {
-		if (execvp(argv[0], argv) == -1) {
-			fprintf(stdout, "execvp() failed to launch: %s\n", buffer);
+		if(execvp(argv[0], argv) == -1) {
+			fprintf(stderr, error);
 		}
-	}
-	else if (!ampy) {
+	} else if (!ampy) {
 		wait();
 	}
-	
-	// heap cleanup
-	int i;
-	for (i = 0; i < argc; i++) {
-		free(argv[i]);
-	}
-	
+		
 	return 1;
 }
 
@@ -186,9 +133,7 @@ int main(int argc, char * argv[]) {
 			continue;
 		}
 		
-		if (parse_builtin(buffer) == -1){
-			parse(buffer);
-		}
+		parse(buffer);
 		
 	}
 	return 0;
