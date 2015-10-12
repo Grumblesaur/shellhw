@@ -50,15 +50,18 @@ int builtin(int argc, char ** argv) {
 }
 
 int parse(char * buffer) {
+	// can't execute no commands
 	if (strlen(buffer) == 0) {
 		return 0;
 	}
+
 	// initialize vars for parsing
 	char * cptr;
 	int argc = 0;
 	char * argv[MAX_ARGS];
 	int ampy = 0; // should this run in the background?
-	
+
+	// tokenize the string in-place; count the number of arguments	
 	cptr = strtok(buffer, " \t\r\n");
 	argv[argc] = cptr;
 	while (cptr != NULL) {
@@ -87,8 +90,7 @@ int parse(char * buffer) {
 }
 
 int ispyfile(char * buffer) {
-	if (strstr(buffer, ".py")) return 1;
-	return 0;
+	return (strstr(buffer, ".py")) ? 1 : 0;
 }
 
 int striswhtspc(char * buffer) {
@@ -113,12 +115,11 @@ int main(int argc, char * argv[]) {
 			// exit();
 	} //otherwise,
 	
-	// init process
+	// init
 	char buffer[512];
 	fprintf(stdout, "Process initialized.\n");
 	// TODO:
 		// implement interactive mode loop
-		// implement non-exec() commands
 	for(;;) {
 		fprintf(stdout, "mysh> ");
 		fgets(buffer, 512, stdin);
