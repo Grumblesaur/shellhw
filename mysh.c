@@ -9,42 +9,44 @@
 const int MAX_ARGS = 128;
 const char error[] = "An error has occurred.\n";
 
-int parse_builtin(char * buffer) {
+int builtin(int argc, char ** argv) {
+	// initialize vars for command-determining logic
 	const char * builtins[] = {"exit", "cd", "pwd", "wait"};
-	char * cptr = buffer;
 	int choice = -1;
+	int i;
 	
-	int buffsize = 1024;
-	char wdbuffer[buffsize];
+	// initialize vars for getcwd()
+	int buffsize = 512;
+	char wdbuffer[buffsize];	
 	
-	while (*cptr != 0) {
-		if(*cptr == '\t' || *cptr == '\n' || *cptr == '\r' || *cptr == ' '){
-			++cptr;
-		} else {
-			int i;
-			for (i = 0; i < 4; ++i) {
-				if (strncmp(cptr, builtins[i], strlen(builtins[i])) == 0) {
-					choice = i;
-				}
-			}
+	// determine which builtin we're calling
+	for (i = 0; i < 4; ++i) {
+		if (strcmp(argv[0], builtins[i]) == 0) {
+			choice = i;
 			break;
 		}
 	}
-		switch (choice) {
-			case 0:
-				exit(EXIT_SUCCESS);
-				return choice;
-			case 1:
-				// cd logic
-				return choice;
-			case 2:
-				fprintf(stdout, "%s\n", getcwd(wdbuffer, buffsize));
-				return choice;
-			case 3:
-				wait();
-				return choice;
-		}	
-	return 0;
+	
+	// call builting procedure
+	switch (choice) {
+		case 0:
+			exit(EXIT_SUCCESS);
+		case 1:
+			// default to user's home folder if no path is supplied
+			if (argv[1] == NULL) {
+				chdir(getenv("HOME"));
+			} else {
+				chdir(argv[1]);
+			}
+			return choice;
+		case 2:
+			fprintf(stdout, "%s\n", getcwd(wdbuffer, buffsize));
+			return choice;
+		case 3:
+			wait();
+			return choice;
+	}	
+	return choice;
 }
 
 int parse(char * buffer) {
@@ -57,7 +59,6 @@ int parse(char * buffer) {
 	char * argv[MAX_ARGS];
 	int ampy = 0; // should this run in the background?
 	
-	fprintf(stdout, "Begin tokenizing process\n");
 	cptr = strtok(buffer, " \t\r\n");
 	argv[argc] = cptr;
 	while (cptr != NULL) {
@@ -65,20 +66,14 @@ int parse(char * buffer) {
 		argv[++argc] = cptr;
 	}
 	
-	fprintf(stdout, "Terminate argvector with nullptr\n");
-	
-	int i;
-	fprintf(stdout, "argc is %d\n args are:\n", argc);
-	for (i = 0; i < argc; ++i) {
-		fprintf(stdout, "\t%s\n", argv[i]);
+	if (builtin(argc, argv) != -1) {
+		return 1;
 	}
 	
-	fprintf(stdout, "Check for & instruction\n");	
 	if (strcmp(argv[argc - 1], "&") == 0) {
 		ampy = 1;
 	}
 	
-	fprintf(stdout, "Start fork() & exec() process\n");	
 	int pid = fork();
 	if (pid == 0) {
 		if(execvp(argv[0], argv) == -1) {
