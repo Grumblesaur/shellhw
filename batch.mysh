@@ -1,0 +1,8 @@
+ls -a > lsfile.txt
+mkdir tstdir
+cd tstdir
+touch tstdirfile.txt
+cd ..
+echo this is a big joke
+echo this is a big joke > joke.txt
+exit

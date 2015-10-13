@@ -182,8 +182,11 @@ int main(int argc, char * argv[]) {
 	const int bufsize = 512;
 	char buffer[bufsize];
 	
+	fprintf(stdout, "process initialized\n");
+	
 	// batch mode
 	if (argc > 1) {
+		fprintf(stdout, "reached batch mode\n");
 		FILE * fptr;
 		char * line = NULL;
 		size_t len = 0;
@@ -194,8 +197,12 @@ int main(int argc, char * argv[]) {
 			fprintf(stderr, error);
 			exit(EXIT_FAILURE);
 		}
+		
+		fprintf(stdout, "about to loop through file\n");
 		while(read = getline(&line, &len, fptr) != -1) {
-			strcmp(buffer, line);
+			fprintf(stdout, "start loop iteration\n");
+			strcpy(buffer, line);
+			fprintf(stdout, "%s\n", buffer);
 			if (striswhtspc(buffer)) {
 				continue;
 			}
