@@ -9,6 +9,28 @@
 const int MAX_ARGS = 128;
 const char error[] = "An error has occurred.\n";
 
+// call python interpreter to execute .py files
+void runpyfile(char *argv[], int argc, int ampy) {
+	char path[] = "python";
+	char * args[MAX_ARGS];
+	args[0] = path;
+	int i;
+	for (i = 1; i < argc + 1; ++i) {
+		args[i] = argv[i - 1];
+		// fprintf(stdout, "%X\n", args[i]);
+	}
+	args[i] = NULL;
+	
+	int pid = fork();
+	if (pid == 0) {
+		execvp(path, args);
+	} else if (!ampy) {
+		wait();
+	}
+	return;
+}
+
+// run as builtin function if possible
 int builtin(int argc, char ** argv) {
 	// initialize vars for command-determining logic
 	const char * builtins[] = {"exit", "cd", "pwd", "wait"};
@@ -49,6 +71,7 @@ int builtin(int argc, char ** argv) {
 	return choice;
 }
 
+// interpret buffer as command
 int parse(char * buffer) {
 	// can't execute no commands
 	if (strlen(buffer) == 0) {
@@ -68,15 +91,23 @@ int parse(char * buffer) {
 		cptr = strtok(NULL, " \t\r\n");
 		argv[++argc] = cptr;
 	}
-	
+	// make sure this isn't a builtin since we're planning to exec() it
 	if (builtin(argc, argv) != -1) {
 		return 1;
 	}
 	
+	// determine whether we should fork
 	if (strcmp(argv[argc - 1], "&") == 0) {
 		ampy = 1;
 	}
+
+	// make sure this isn't a python file we can just run
+	if (ispyfile(argv[0])) {
+		runpyfile(argv, argc, ampy);
+		return 1;
+	}
 	
+	// fork() & exec*() procedure
 	int pid = fork();
 	if (pid == 0) {
 		if(execvp(argv[0], argv) == -1) {
@@ -89,10 +120,12 @@ int parse(char * buffer) {
 	return 1;
 }
 
+// determine whether command is a python file
 int ispyfile(char * buffer) {
 	return (strstr(buffer, ".py")) ? 1 : 0;
 }
 
+// determine whether to skip input
 int striswhtspc(char * buffer) {
 	if (strlen(buffer) == 0) {
 		return 0;
@@ -123,7 +156,6 @@ int main(int argc, char * argv[]) {
 	for(;;) {
 		fprintf(stdout, "mysh> ");
 		fgets(buffer, 512, stdin);
-		fprintf(stdout, "\n");
 		
 		if (striswhtspc(buffer)) {
 			continue;
