@@ -17,7 +17,6 @@ void runpyfile(char *argv[], int argc, int ampy) {
 	int i;
 	for (i = 1; i < argc + 1; ++i) {
 		args[i] = argv[i - 1];
-		// fprintf(stdout, "%X\n", args[i]);
 	}
 	args[i] = NULL;
 	
@@ -71,6 +70,38 @@ int builtin(int argc, char ** argv) {
 	return choice;
 }
 
+int parse_redirect(char * buffer) {
+	char * cptr;
+	int argc = 0;
+	char * argv[MAX_ARGS];
+	int back = 1;
+	
+	int ampy = hasampy(buffer);
+	back += ampy;
+	
+	cptr = strtok(buffer, "\t\r\n> ");
+	argv[argc] = cptr;
+	while (cptr != NULL) {
+		cptr = strtok(NULL, "\t\r\n> ");
+		argv[++argc] = cptr;
+	}
+	argv[argc] = NULL;
+	
+	FILE * fptr = fopen(argv[argc - back], "w");
+	int fd = fileno(fptr);
+	argv[argc - back] = NULL;
+	
+	int pid = fork();
+	if (pid == 0) {
+		dup2(fd, STDOUT_FILENO);
+		execvp(argv[0], argv);
+	} else if (!ampy) {
+		wait();
+	}
+	
+	return 1;
+}
+
 // interpret buffer as command
 int parse(char * buffer) {
 	// can't execute no commands
@@ -97,9 +128,7 @@ int parse(char * buffer) {
 	}
 	
 	// determine whether we should fork
-	if (strcmp(argv[argc - 1], "&") == 0) {
-		ampy = 1;
-	}
+	ampy = hasampy(argv[argc - 1]);
 
 	// make sure this isn't a python file we can just run
 	if (ispyfile(argv[0])) {
@@ -140,28 +169,37 @@ int striswhtspc(char * buffer) {
 	return 1;
 }
 
+int hasampy(char * buffer) {
+	return (strstr(buffer, "&")) ? 1 : 0;
+}
+
+int haswaka(char * buffer) {
+	return (strstr(buffer, ">")) ? 1 : 0;
+}
+
 int main(int argc, char * argv[]) {
+	const int bufsize = 512;
 	if (argc > 1) {
-		// TODO:
-			// open file
-			// execute shell commands in file line-by-line
-			// exit();
-	} //otherwise,
+		
+	}
 	
 	// init
-	char buffer[512];
-	fprintf(stdout, "Process initialized.\n");
+	char buffer[bufsize];
 	// TODO:
 		// implement interactive mode loop
 	for(;;) {
 		fprintf(stdout, "mysh> ");
-		fgets(buffer, 512, stdin);
+		fgets(buffer, bufsize, stdin);
 		
 		if (striswhtspc(buffer)) {
 			continue;
 		}
 		
-		parse(buffer);
+		if (haswaka(buffer)) {
+			parse_redirect(buffer);
+		} else {
+			parse(buffer);
+		}
 		
 	}
 	return 0;
