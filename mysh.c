@@ -154,12 +154,21 @@ int ispyfile(char * buffer) {
 	return (strstr(buffer, ".py")) ? 1 : 0;
 }
 
+// determine whether command should wait()
+int hasampy(char * buffer) {
+	return (strstr(buffer, "&")) ? 1 : 0;
+}
+
+// determine whether command should redirect output
+int haswaka(char * buffer) {
+	return (strstr(buffer, ">")) ? 1 : 0;
+}
+
 // determine whether to skip input
 int striswhtspc(char * buffer) {
 	if (strlen(buffer) == 0) {
 		return 0;
 	}
-	
 	while (*buffer != 0) {
 		if (*buffer != ' ' && *buffer != '\t' && *buffer != '\n') {
 			return 0;
@@ -169,38 +178,48 @@ int striswhtspc(char * buffer) {
 	return 1;
 }
 
-int hasampy(char * buffer) {
-	return (strstr(buffer, "&")) ? 1 : 0;
-}
-
-int haswaka(char * buffer) {
-	return (strstr(buffer, ">")) ? 1 : 0;
-}
-
 int main(int argc, char * argv[]) {
 	const int bufsize = 512;
+	char buffer[bufsize];
+	
+	// batch mode
 	if (argc > 1) {
+		FILE * fptr;
+		char * line = NULL;
+		size_t len = 0;
+		ssize_t read;
 		
+		fptr = fopen(argv[1], "r");
+		if (fptr == NULL) {
+			fprintf(stderr, error);
+			exit(EXIT_FAILURE);
+		}
+		while(read = getline(&line, &len, fptr) != -1) {
+			strcmp(buffer, line);
+			if (striswhtspc(buffer)) {
+				continue;
+			}
+			if (haswaka(buffer)) {
+				parse_redirect(buffer);
+			} else {
+				parse(buffer);
+			}
+		}
+		return 0;
 	}
 	
-	// init
-	char buffer[bufsize];
-	// TODO:
-		// implement interactive mode loop
+	// interactive mode
 	for(;;) {
 		fprintf(stdout, "mysh> ");
 		fgets(buffer, bufsize, stdin);
-		
 		if (striswhtspc(buffer)) {
 			continue;
 		}
-		
 		if (haswaka(buffer)) {
 			parse_redirect(buffer);
 		} else {
 			parse(buffer);
 		}
-		
 	}
 	return 0;
 }
