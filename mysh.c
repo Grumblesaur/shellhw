@@ -59,13 +59,13 @@ int builtin(int argc, char ** argv) {
 			} else {
 				chdir(argv[1]);
 			}
-			return choice;
+			break;
 		case 2:
 			fprintf(stdout, "%s\n", getcwd(wdbuffer, buffsize));
-			return choice;
+			break;
 		case 3:
 			wait();
-			return choice;
+			break;
 	}	
 	return choice;
 }
