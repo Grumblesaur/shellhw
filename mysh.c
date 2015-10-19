@@ -71,14 +71,17 @@ int builtin(int argc, char ** argv) {
 }
 
 int parse_redirect(char * buffer) {
+	// initialize parse-relevant vars
 	char * cptr;
 	int argc = 0;
 	char * argv[MAX_ARGS];
 	int back = 1;
 	
+	// determine where > operator should be
 	int ampy = hasampy(buffer);
 	back += ampy;
 	
+	// tokenize buffer into arguments
 	cptr = strtok(buffer, "\t\r\n> ");
 	argv[argc] = cptr;
 	while (cptr != NULL) {
@@ -87,18 +90,21 @@ int parse_redirect(char * buffer) {
 	}
 	argv[argc] = NULL;
 	
+	// open up the target file
 	FILE * fptr = fopen(argv[argc - back], "w");
 	int fd = fileno(fptr);
 	argv[argc - back] = NULL;
 	
 	int pid = fork();
 	if (pid == 0) {
+		// redirect child process' standard output to the target file
 		dup2(fd, STDOUT_FILENO);
-		execvp(argv[0], argv);
+		if (execvp(argv[0], argv) == -1) {
+			fprintf(stderr, error);
+		}
 	} else if (!ampy) {
 		wait();
 	}
-	
 	return 1;
 }
 
@@ -139,13 +145,12 @@ int parse(char * buffer) {
 	// fork() & exec*() procedure
 	int pid = fork();
 	if (pid == 0) {
-		if(execvp(argv[0], argv) == -1) {
+		if (execvp(argv[0], argv) == -1) {
 			fprintf(stderr, error);
 		}
 	} else if (!ampy) {
 		wait();
 	}
-		
 	return 1;
 }
 
@@ -160,20 +165,29 @@ int hasampy(char * buffer) {
 }
 
 // determine whether command should redirect output
+// more than 1 redirection operator is considered an error
 int haswaka(char * buffer) {
-	return (strstr(buffer, ">")) ? 1 : 0;
+	char * c = buffer;
+	int wakas = 0;
+	while (*c != 0) {
+		if (*c == '>') {
+			++wakas;
+		}
+		++c;
+	}
+	return wakas;
 }
 
 // determine whether to skip input
-int striswhtspc(char * buffer) {
-	if (strlen(buffer) == 0) {
+int striswhtspc(char * buf) {
+	if (strlen(buf) == 0) {
 		return 0;
 	}
-	while (*buffer != 0) {
-		if (*buffer != ' ' && *buffer != '\t' && *buffer != '\n') {
+	while (*buf != 0) {
+		if (*buf != ' ' && *buf != '\t' && *buf != '\n' && *buf != '\r') {
 			return 0;
 		}
-		++buffer;
+		++buf;
 	}
 	return 1;
 }
@@ -181,12 +195,12 @@ int striswhtspc(char * buffer) {
 int main(int argc, char * argv[]) {
 	const int bufsize = 512;
 	char buffer[bufsize];
+	int redirect;
 	
 	fprintf(stdout, "process initialized\n");
 	
 	// batch mode
 	if (argc > 1) {
-		fprintf(stdout, "reached batch mode\n");
 		FILE * fptr;
 		char * line = NULL;
 		size_t len = 0;
@@ -198,16 +212,17 @@ int main(int argc, char * argv[]) {
 			exit(EXIT_FAILURE);
 		}
 		
-		fprintf(stdout, "about to loop through file\n");
 		while(read = getline(&line, &len, fptr) != -1) {
-			fprintf(stdout, "start loop iteration\n");
 			strcpy(buffer, line);
-			fprintf(stdout, "%s\n", buffer);
 			if (striswhtspc(buffer)) {
 				continue;
 			}
-			if (haswaka(buffer)) {
+			redirect = haswaka(buffer);
+			if (redirect == 1) {
 				parse_redirect(buffer);
+			} else if (redirect > 1) {
+				fprintf(stderr, error);
+				continue;
 			} else {
 				parse(buffer);
 			}
@@ -222,8 +237,12 @@ int main(int argc, char * argv[]) {
 		if (striswhtspc(buffer)) {
 			continue;
 		}
-		if (haswaka(buffer)) {
+		redirect = haswaka(buffer);
+		if (redirect == 1) {
 			parse_redirect(buffer);
+		} else if (redirect > 1) {
+			fprintf(stderr, error);
+			continue;
 		} else {
 			parse(buffer);
 		}
