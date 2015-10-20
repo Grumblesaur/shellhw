@@ -1,14 +1,14 @@
-251 lines in file 'mysh.c'.
-193 lines of code.
-30 lines of comments.
-28 lines of whitespace.
+232 lines in file 'mysh.c'.
+178 lines of code.
+24 lines of comments.
+30 lines of whitespace.
 
 5 lines in file 'test.py'.
 3 lines of code.
 0 lines of comments.
 2 lines of whitespace.
 
-256 lines in files overall.
-196 lines of code.
-30 lines of comments.
-30 lines of whitespace.
+237 lines in files overall.
+181 lines of code.
+24 lines of comments.
+32 lines of whitespace.
