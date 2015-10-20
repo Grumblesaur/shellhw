@@ -10,9 +10,11 @@ const int MAX_ARGS = 128;
 const char error[] = "An error has occurred.\n";
 
 // call python interpreter to execute .py files
-void runpyfile(char *argv[], int argc) {
+int runpyfile(char *argv[], int argc, int ampy, int fd) {
 	char path[] = "python";
 	char * args[MAX_ARGS];
+	
+	// align arguments with correct argv[] ordering
 	args[0] = path;
 	int i;
 	for (i = 1; i < argc + 1; ++i) {
@@ -20,10 +22,19 @@ void runpyfile(char *argv[], int argc) {
 	}
 	args[i] = NULL;
 	
-	if (execvp(argv[0], argv) == -1) {
-		fprintf(stderr, error);
+	int pid = fork();
+	
+	if (pid == 0) {
+		if (fd != 0) {
+			dup2(fd, STDOUT_FILENO);
+		}
+		if (execvp(args[0], args) == -1) {
+			fprintf(stderr, error);
+		}
+	} else if (!ampy) {
+		wait();
 	}
-	return;
+	return 1;
 }
 
 // run as builtin function if possible
@@ -45,7 +56,7 @@ int builtin(int argc, char ** argv) {
 		}
 	}
 	
-	// call builting procedure
+	// call builtin procedure
 	switch (choice) {
 		case 0:
 			exit(EXIT_SUCCESS);
@@ -67,6 +78,7 @@ int builtin(int argc, char ** argv) {
 	return choice;
 }
 
+// parse procedure when '>' operator is present
 int parse_redirect(char * buffer) {
 	char * cptr;
 	int argc = 0;
@@ -88,22 +100,18 @@ int parse_redirect(char * buffer) {
 	int fd = fileno(fptr);
 	argv[argc - back] = NULL;
 	
+	// make sure this isn't a python file we can just run
+	if (ispyfile(argv[0])) {
+		return runpyfile(argv, argc, ampy, fd);
+	}
+	
 	int pid = fork();
 	if (pid == 0) {
-<<<<<<< HEAD
 		// redirect child process' standard output to the target file
 		dup2(fd, STDOUT_FILENO);	
-
-		// make sure this isn't a python file we can just run
-		if (ispyfile(argv[0])) {
-			runpyfile(argv, argc);
-		} else if (execvp(argv[0], argv) == -1) {
+		if (execvp(argv[0], argv) == -1) {
 			fprintf(stderr, error);
 		}
-=======
-		dup2(fd, STDOUT_FILENO);
-		execvp(argv[0], argv);
->>>>>>> parent of d426c68... Some redirection bulletproofing.
 	} else if (!ampy) {
 		wait();
 	}
@@ -139,23 +147,20 @@ int parse(char * buffer) {
 	// determine whether we should fork
 	ampy = hasampy(argv[argc - 1]);
 
+	// make sure this isn't a python file we can just run
+	if (ispyfile(argv[0])) {
+		return runpyfile(argv, argc, ampy, 0);
+	}
+	 
 	// fork() & exec*() procedure
 	int pid = fork();
 	if (pid == 0) {
-<<<<<<< HEAD
-		// make sure this isn't a python file we can just run
-		if (ispyfile(argv[0])) {
-			runpyfile(argv, argc);
-		} else if (execvp(argv[0], argv) == -1) {
-=======
 		if(execvp(argv[0], argv) == -1) {
->>>>>>> parent of d426c68... Some redirection bulletproofing.
 			fprintf(stderr, error);
 		}
 	} else if (!ampy) {
 		wait();
 	}
-		
 	return 1;
 }
 
@@ -191,8 +196,6 @@ int striswhtspc(char * buffer) {
 int main(int argc, char * argv[]) {
 	const int bufsize = 512;
 	char buffer[bufsize];
-	
-	fprintf(stdout, "process initialized\n");
 	
 	// batch mode
 	if (argc > 1) {
