@@ -10,7 +10,7 @@ const int MAX_ARGS = 128;
 const char error[] = "An error has occurred.\n";
 
 // call python interpreter to execute .py files
-void runpyfile(char *argv[], int argc, int ampy) {
+void runpyfile(char *argv[], int argc) {
 	char path[] = "python";
 	char * args[MAX_ARGS];
 	args[0] = path;
@@ -20,11 +20,8 @@ void runpyfile(char *argv[], int argc, int ampy) {
 	}
 	args[i] = NULL;
 	
-	int pid = fork();
-	if (pid == 0) {
-		execvp(path, args);
-	} else if (!ampy) {
-		wait();
+	if (execvp(argv[0], argv) == -1) {
+		fprintf(stderr, error);
 	}
 	return;
 }
@@ -98,8 +95,12 @@ int parse_redirect(char * buffer) {
 	int pid = fork();
 	if (pid == 0) {
 		// redirect child process' standard output to the target file
-		dup2(fd, STDOUT_FILENO);
-		if (execvp(argv[0], argv) == -1) {
+		dup2(fd, STDOUT_FILENO);	
+
+		// make sure this isn't a python file we can just run
+		if (ispyfile(argv[0])) {
+			runpyfile(argv, argc);
+		} else if (execvp(argv[0], argv) == -1) {
 			fprintf(stderr, error);
 		}
 	} else if (!ampy) {
@@ -136,16 +137,13 @@ int parse(char * buffer) {
 	// determine whether we should fork
 	ampy = hasampy(argv[argc - 1]);
 
-	// make sure this isn't a python file we can just run
-	if (ispyfile(argv[0])) {
-		runpyfile(argv, argc, ampy);
-		return 1;
-	}
-	
 	// fork() & exec*() procedure
 	int pid = fork();
 	if (pid == 0) {
-		if (execvp(argv[0], argv) == -1) {
+		// make sure this isn't a python file we can just run
+		if (ispyfile(argv[0])) {
+			runpyfile(argv, argc);
+		} else if (execvp(argv[0], argv) == -1) {
 			fprintf(stderr, error);
 		}
 	} else if (!ampy) {

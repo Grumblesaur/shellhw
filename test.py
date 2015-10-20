@@ -1,5 +1,3 @@
-import sys
+testfile = open('test.txt', 'w')
 
-for arg in sys.argv:
-	print arg
-
+testfile.write('program was successful')
