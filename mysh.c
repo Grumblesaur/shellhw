@@ -22,6 +22,8 @@ int runpyfile(char *argv[], int argc, int ampy, int fd) {
 	}
 	args[i] = NULL;
 	
+	if (execvp(path, args) == -1) {
+		fprintf(stderr, error);
 	int pid = fork();
 	
 	if (pid == 0) {
@@ -99,6 +101,7 @@ int parse_redirect(char * buffer) {
 	FILE * fptr = fopen(argv[argc - back], "w");
 	int fd = fileno(fptr);
 	argv[argc - back] = NULL;
+
 	
 	// make sure this isn't a python file we can just run
 	if (ispyfile(argv[0])) {
@@ -139,6 +142,7 @@ int parse(char * buffer) {
 		cptr = strtok(NULL, " \t\r\n");
 		argv[++argc] = cptr;
 	}
+	
 	// make sure this isn't a builtin since we're planning to exec() it
 	if (builtin(argc, argv) != -1) {
 		return 1;
