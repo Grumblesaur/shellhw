@@ -22,6 +22,13 @@ void runpyfile(char *argv[], int argc) {
 	
 	if (execvp(path, args) == -1) {
 		fprintf(stderr, error);
+	int pid = fork();
+	if (pid == 0) {
+		if (execvp(path, args) == -1) {
+			fprintf(stderr, error);
+		}
+	} else if (!ampy) {
+		wait();
 	}
 	return;
 }
