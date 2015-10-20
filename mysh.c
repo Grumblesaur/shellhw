@@ -22,8 +22,6 @@ int runpyfile(char *argv[], int argc, int ampy, int fd) {
 	}
 	args[i] = NULL;
 	
-	if (execvp(path, args) == -1) {
-		fprintf(stderr, error);
 	int pid = fork();
 	
 	if (pid == 0) {
