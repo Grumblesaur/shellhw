@@ -105,6 +105,7 @@ int parse_redirect(char * buffer) {
 		argv[++argc] = cptr;
 	}
 	
+	// bail out if we don't have a source AND destination for > operator
 	if (argc < 2) {
 		errmsg();
 		return 0;
@@ -215,6 +216,8 @@ int main(int argc, char * argv[]) {
 	
 	// batch mode
 	if (argc > 1) {
+		// couldn't figure out how to loop linewise with open() and read();
+		// used fopen() and fgets() instead
 		FILE * fptr = fopen(argv[1], "r");
 		if (fptr == NULL) {
 			errmsg();
