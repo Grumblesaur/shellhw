@@ -1,6 +1,6 @@
-#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
 
@@ -76,7 +76,9 @@ int builtin(int argc, char ** argv) {
 			}
 			break;
 		case 2:
-			fprintf(stdout, "%s\n", getcwd(wdbuffer, buffsize));
+			getcwd(wdbuffer, buffsize);
+			write(STDOUT_FILENO, wdbuffer, strlen(wdbuffer));
+			write(STDOUT_FILENO, "\n", 1);
 			break;
 		case 3:
 			wait();
@@ -102,12 +104,17 @@ int parse_redirect(char * buffer) {
 		cptr = strtok(NULL, "\t\r\n> ");
 		argv[++argc] = cptr;
 	}
+	
+	if (argc < 2) {
+		errmsg();
+		return 0;
+	}
+	
 	argv[argc] = NULL;
 	
 	// open file for redirection
 	int fd = open(argv[argc - back], O_WRONLY | O_CREAT, S_IWUSR | S_IRUSR);
 	argv[argc - back] = NULL;
-
 	
 	// make sure this isn't a python file we can just run
 	if (ispyfile(argv[0])) {
