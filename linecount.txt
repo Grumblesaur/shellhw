@@ -1,9 +1,9 @@
-247 lines in file 'mysh.c'.
-186 lines of code.
-28 lines of comments.
-33 lines of whitespace.
+246 lines in file 'mysh.c'.
+182 lines of code.
+32 lines of comments.
+32 lines of whitespace.
 
-247 lines in files overall.
-186 lines of code.
-28 lines of comments.
-33 lines of whitespace.
+246 lines in files overall.
+182 lines of code.
+32 lines of comments.
+32 lines of whitespace.

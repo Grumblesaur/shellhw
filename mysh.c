@@ -2,12 +2,19 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <fcntl.h>
 
 // with arguments typically being a few characters each, delimited by spaces
 // and constrained to a 512 character buffer, 128 is more than enough slots
 // for arguments in our vector
 const int MAX_ARGS = 128;
-const char error[] = "An error has occurred.\n";
+const char error[30] = "An error has occurred.\n";
+int errlen = 24;
+
+void errmsg() {
+	write(STDERR_FILENO, error, errlen);
+	return;
+}
 
 // call python interpreter to execute .py files
 int runpyfile(char *argv[], int argc, int ampy, int fd) {
@@ -29,7 +36,7 @@ int runpyfile(char *argv[], int argc, int ampy, int fd) {
 			dup2(fd, STDOUT_FILENO);
 		}
 		if (execvp(args[0], args) == -1) {
-			fprintf(stderr, error);
+			errmsg();
 		}
 	} else if (!ampy) {
 		wait();
@@ -88,6 +95,7 @@ int parse_redirect(char * buffer) {
 	int ampy = hasampy(buffer);
 	back += ampy;
 	
+	// tokenize buffer
 	cptr = strtok(buffer, "\t\r\n> ");
 	argv[argc] = cptr;
 	while (cptr != NULL) {
@@ -96,8 +104,8 @@ int parse_redirect(char * buffer) {
 	}
 	argv[argc] = NULL;
 	
-	FILE * fptr = fopen(argv[argc - back], "w");
-	int fd = fileno(fptr);
+	// open file for redirection
+	int fd = open(argv[argc - back], O_WRONLY | O_CREAT, S_IWUSR | S_IRUSR);
 	argv[argc - back] = NULL;
 
 	
@@ -111,12 +119,11 @@ int parse_redirect(char * buffer) {
 		// redirect child process' standard output to the target file
 		dup2(fd, STDOUT_FILENO);	
 		if (execvp(argv[0], argv) == -1) {
-			fprintf(stderr, error);
+			errmsg();
 		}
 	} else if (!ampy) {
 		wait();
 	}
-	
 	return 1;
 }
 
@@ -158,7 +165,7 @@ int parse(char * buffer) {
 	int pid = fork();
 	if (pid == 0) {
 		if(execvp(argv[0], argv) == -1) {
-			fprintf(stderr, error);
+			errmsg();
 		}
 	} else if (!ampy) {
 		wait();
@@ -201,23 +208,15 @@ int main(int argc, char * argv[]) {
 	
 	// batch mode
 	if (argc > 1) {
-		fprintf(stdout, "reached batch mode\n");
-		FILE * fptr;
-		char * line = NULL;
-		size_t len = 0;
-		ssize_t read;
-		
-		fptr = fopen(argv[1], "r");
+		FILE * fptr = fopen(argv[1], "r");
 		if (fptr == NULL) {
-			fprintf(stderr, error);
+			errmsg();
 			exit(EXIT_FAILURE);
 		}
 		
-		fprintf(stdout, "about to loop through file\n");
-		while(read = getline(&line, &len, fptr) != -1) {
-			fprintf(stdout, "start loop iteration\n");
-			strcpy(buffer, line);
-			fprintf(stdout, "%s\n", buffer);
+		// obtain instructions line-by-line
+		while (fgets(buffer, bufsize, fptr)) {
+			// interpret lines
 			if (striswhtspc(buffer)) {
 				continue;
 			}
